@@ -19,11 +19,11 @@ export class Ticket {
   @Column()
   column: number;
 
-  @ManyToOne(() => Event, (event) => event.tickets)
+  @ManyToOne(() => Event, (event) => event.tickets, { onDelete: "CASCADE" })
   @JoinColumn({ name: "event_id" })
   event: Event;
 
-  @ManyToOne(() => Buyer, (buyer) => buyer.tickets)
+  @ManyToOne(() => Buyer, (buyer) => buyer.tickets, { onDelete: "SET NULL" })
   @JoinColumn({ name: "buyer_id" })
   buyer: Buyer;
 }

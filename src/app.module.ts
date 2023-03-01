@@ -22,6 +22,7 @@ import { TicketModule } from "./modules/ticket/ticket.module";
       database: "tickets",
       entities: [Admin, Buyer, Event, Ticket],
       synchronize: true,
+      logging: true
     }),
     AdminModule,
     BuyerModule,

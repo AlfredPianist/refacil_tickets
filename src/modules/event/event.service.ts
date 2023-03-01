@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import _ from "lodash";
 import { Repository } from "typeorm";
 import { Ticket } from "../ticket/ticket.entity";
 import { Event } from "./event.entity";
@@ -36,21 +35,15 @@ export class EventService {
     const availableSeats = await this.showAvailableSeats(event);
     const numberOfAvailableSeats = availableSeats.length;
 
-    const response = _.omit(
-      { ...event, numberOfAvailableSeats, availableSeats },
-      "tickets"
-    );
-
+    const response = { ...event, numberOfAvailableSeats, availableSeats };
     return response;
   }
 
   async showAvailableSeats(event: Event): Promise<Ticket[]> {
-    const availableSeats = await this.ticketRepository
-      .createQueryBuilder("ticket")
-      .leftJoin(Event, "e")
-      .select(["ticket.row", "ticket.column"])
-      .where("ticket.buyer IS NULL")
-      .getMany();
+    const availableSeats = await this.ticketRepository.find({
+      select: { row: true, column: true },
+      where: { buyer: null, event },
+    });
     return availableSeats;
   }
 
@@ -60,12 +53,13 @@ export class EventService {
     rows: number;
     columns: number;
     price: number;
-    tickets: Ticket[];
     totalSeats: number;
   }> {
     const event = this.eventRepository.create(attrs);
+
     await this.eventRepository.save(event);
     const totalSeats = await this.createEventTickets(event);
+
     const response = { ...event, totalSeats };
     return response;
   }
@@ -94,7 +88,17 @@ export class EventService {
     return (await this.ticketRepository.save(ticketsArray)).length;
   }
 
-  async updateEvent(id: string, attrs: Partial<Event>): Promise<Event> {
+  async updateEvent(
+    id: string,
+    attrs: Partial<Event>
+  ): Promise<{
+    id: string;
+    name: string;
+    rows: number;
+    columns: number;
+    price: number;
+    totalSeats: Promise<number>;
+  }> {
     const event = await this.eventRepository.preload({
       id,
       ...attrs,
@@ -103,81 +107,83 @@ export class EventService {
       throw new NotFoundException(`Event with id ${id} not found`);
     }
 
-    // Recreate tickets according to update
-    const previousMaxSeat = await this.ticketRepository.findOne({
-      where: { event },
-      order: { row: "DESC", column: "DESC" },
-    });
-    console.log(`last seat: ${previousMaxSeat}`);
+    const totalSeats = this.updateEventTickets(event);
+    await this.eventRepository.save(event);
+
+    const response = { ...event, totalSeats };
+    return response;
+  }
+
+  async updateEventTickets(event: Event): Promise<number> {
+    const previousMaxSeat = await this.ticketRepository
+      .createQueryBuilder("ticket")
+      .innerJoin("event", "event", "ticket.event_id = event.id")
+      .orderBy("ticket.row", "DESC")
+      .addOrderBy("ticket.column", "DESC")
+      .getOne();
 
     const previousMaxRow = previousMaxSeat.row.charCodeAt(0) - 64;
     const previousMaxColumn = previousMaxSeat.column;
     const newMaxRow = event.rows;
     const newMaxColumn = event.columns;
 
-    let rowsArray = [];
-    let columnsArray = [];
-
-    if (previousMaxRow < newMaxRow) {
-      rowsArray = Array.from(
-        { length: newMaxRow - previousMaxRow },
-        (_, count) => String.fromCharCode(previousMaxRow + count + 65)
-      );
-    } else {
-      rowsArray = Array.from({ length: newMaxRow }, (_, count) =>
-        String.fromCharCode(count + 65)
-      );
+    const rowsArray = Array.from({ length: newMaxRow }, (_, count) =>
+      String.fromCharCode(count + 65)
+    );
+    const columnsArray = Array.from(
+      { length: newMaxColumn },
+      (_, count) => count + 1
+    );
+    if (previousMaxRow >= newMaxRow) {
       this.ticketRepository
-        .createQueryBuilder("tickets")
+        .createQueryBuilder("ticket")
         .delete()
         .from(Ticket)
-        .where(`ticket.row > ${newMaxRow}`);
+        .where("ticket.row > :row", {
+          row: String.fromCharCode(newMaxRow + 64),
+        })
+        .execute();
     }
-    if (previousMaxColumn < newMaxColumn) {
-      columnsArray = Array.from(
-        { length: newMaxColumn - previousMaxColumn },
-        (_, count) => previousMaxColumn + count + 1
-      );
-    } else {
-      columnsArray = Array.from(
-        { length: newMaxColumn },
-        (_, count) => count + 1
-      );
+    if (previousMaxColumn >= newMaxColumn) {
       this.ticketRepository
         .createQueryBuilder("tickets")
         .delete()
         .from(Ticket)
-        .where(`ticket.column > ${newMaxColumn}`);
+        .where("ticket.column > :newMaxColumn", { newMaxColumn })
+        .execute();
     }
 
     const ticketsArray = [];
     for (const row of rowsArray) {
-      if (previousMaxRow <= newMaxRow && previousMaxColumn <= newMaxColumn)
-        break;
       for (const column of columnsArray) {
-        const ticket = this.ticketRepository.create({
-          row,
-          column,
-          event,
-        });
+        let ticket = await this.ticketRepository
+          .createQueryBuilder("ticket")
+          .innerJoin("event", "event", "ticket.event_id = event.id")
+          .where("ticket.row = :row AND ticket.column = :column", {
+            row,
+            column,
+          })
+          .getOne();
+        if (ticket === null) {
+          ticket = this.ticketRepository.create({
+            row,
+            column,
+            event,
+          });
+        }
         ticketsArray.push(ticket);
       }
     }
-    await this.ticketRepository.save(ticketsArray);
-    await this.eventRepository.save(event);
 
-    const response = {
-      ...event,
-      totalSeats: await this.ticketRepository.countBy({ event }),
-    };
-    return response;
+    return (await this.ticketRepository.save(ticketsArray)).length;
   }
 
-  async deleteEvent(id: string): Promise<Event> {
+  async deleteEvent(id: string): Promise<void> {
     const event = await this.eventRepository.findOneBy({ id });
     if (event === null) {
       throw new NotFoundException(`Event with id ${id} not found`);
     }
-    return this.eventRepository.remove(event);
+
+    await this.eventRepository.remove(event);
   }
 }
