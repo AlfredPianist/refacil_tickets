@@ -8,7 +8,9 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from "@nestjs/common";
+import { AuthGuard } from "../../guards/auth.guard";
 import { BuyerService } from "../buyer/buyer.service";
 import { CreateBuyerDto } from "../buyer/dtos/create-buyer.dto";
 import { CreateEventDto } from "./dtos/create-event.dto";
@@ -36,9 +38,11 @@ export class EventController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @UseGuards(AuthGuard)
   createEvent(@Body() eventDto: CreateEventDto) {
     return this.eventService.createEvent(eventDto);
   }
+  
   @Post("/:id/buy")
   @HttpCode(HttpStatus.CREATED)
   createBuyer(@Param("id") eventId: string, @Body() buyerDto: CreateBuyerDto) {
@@ -47,12 +51,14 @@ export class EventController {
 
   @Patch("/:id")
   @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard)
   updateEvent(@Param("id") id: string, @Body() eventDto: UpdateEventDto) {
     return this.eventService.updateEvent(id, eventDto);
   }
 
   @Delete("/:id")
   @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(AuthGuard)
   deleteEvent(@Param("id") id: string) {
     return this.eventService.deleteEvent(id);
   }

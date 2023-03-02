@@ -10,12 +10,8 @@ export class AdminService {
     private readonly adminRepository: Repository<Admin>
   ) {}
 
-  async showAdmin(id: number): Promise<Admin> {
-    const admin = await this.adminRepository.findOneBy({ id });
-    if (admin === null) {
-      throw new NotFoundException(`Admin with id ${id} not found`);
-    }
-    return admin;
+  async findAdminByUsername(username: string): Promise<Admin> {
+    return this.adminRepository.findOneBy({ username });
   }
 
   async createAdmin(attrs: Partial<Admin>): Promise<Admin> {
@@ -23,7 +19,7 @@ export class AdminService {
     return this.adminRepository.save(admin);
   }
 
-  async updateAdmin(id: number, attrs: Partial<Admin>): Promise<Admin> {
+  async updateAdmin(id: string, attrs: Partial<Admin>): Promise<Admin> {
     const admin = await this.adminRepository.preload({
       id,
       ...attrs,
@@ -34,10 +30,10 @@ export class AdminService {
     return this.adminRepository.save(admin);
   }
 
-  async deleteAdmin(id: number): Promise<Admin> {
-    const admin = await this.adminRepository.findOneBy({ id });
+  async deleteAdmin(username: string): Promise<Admin> {
+    const admin = await this.adminRepository.findOneBy({ username });
     if (admin === null) {
-      throw new NotFoundException(`Admin with id ${id} not found`);
+      throw new NotFoundException(`Admin not found`);
     }
     return this.adminRepository.remove(admin);
   }
