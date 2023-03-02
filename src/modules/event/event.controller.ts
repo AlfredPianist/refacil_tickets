@@ -42,7 +42,7 @@ export class EventController {
   createEvent(@Body() eventDto: CreateEventDto) {
     return this.eventService.createEvent(eventDto);
   }
-  
+
   @Post("/:id/buy")
   @HttpCode(HttpStatus.CREATED)
   createBuyer(@Param("id") eventId: string, @Body() buyerDto: CreateBuyerDto) {
