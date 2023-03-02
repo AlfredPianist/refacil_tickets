@@ -1,73 +1,152 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
-
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+# Refácil coding challenge
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Events backend ticketing system in which a user can buy up to 4 tickets of any event and an admin can create, update and delete events.
+
+## Requirements
+
+- Node.js - Latest stable version.
+- PostgreSQL.
+- A user and password "postgres" on PostgreSQL and a database called "tickets".
 
 ## Installation
 
 ```bash
-$ npm install
+npm install
 ```
 
 ## Running the app
 
 ```bash
 # development
-$ npm run start
+npm run start
 
 # watch mode
-$ npm run start:dev
+npm run start:dev
 
 # production mode
-$ npm run start:prod
+npm run start:prod
 ```
 
-## Test
+## Endpoints
 
-```bash
-# unit tests
-$ npm run test
+### `POST /auth/signup`
 
-# e2e tests
-$ npm run test:e2e
+Admin signup. Password has to have a minimum of 10 characters, 3 symbols, 3 numbers, 2 uppercase and 2 lowercase
 
-# test coverage
-$ npm run test:cov
+Body sample:
+
+```json
+{
+  "username": "username",
+  "password": "password"
+}
 ```
 
-## Support
+### `POST /auth/signin`
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Admin signin.
 
-## Stay in touch
+Body sample:
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```json
+{
+  "username": "username",
+  "password": "password"
+}
+```
 
-## License
+### `POST /auth/signout`
 
-Nest is [MIT licensed](LICENSE).
+Admin signout.
+
+### `GET /buyers/:id`
+
+Get buyer by id.
+
+### `DELETE /buyers/:id`
+
+Delete buyer by id. All tickets bought are set as NOT NULL.
+
+### `GET /events`
+
+Gets all created events.
+
+### `GET /events/:id`
+
+Gets a single event with all its available seats.
+
+### `POST /events`
+
+Creates an event. Rows are limited from 1 to 27, columns are limited from 1 to 35.
+
+Body sample:
+
+```json
+{
+  "name": "event name",
+  "rows": 15,
+  "columns": 10,
+  "price": 400
+}
+```
+
+### `POST /events/:id/buy`
+
+Buy tickets for an event. Maximum 4 seats per buyer.
+
+Body sample:
+
+```json
+{
+ "id": "78340129340",
+ "birthday": "1998-01-10",
+ "seats": [
+  {
+   "row": "A",
+   "column": 1
+  },
+  {
+   "row": "A",
+   "column": 2
+  },
+  {
+   "row": "A",
+   "column": 3
+  },
+  {
+   "row": "A",
+   "column": 4
+  }
+ ]
+}
+```
+
+### `PATCH /events/:id`
+
+Updates an event.
+
+Body sample:
+
+```json
+{
+  "name": "event name",
+  "rows": 15,
+  "columns": 10,
+  "price": 400
+}
+```
+
+### `DELETE /events/:id`
+
+Deletes an event.
+
+## Further work
+
+- Pending authorization rules for admins.
+- Dockerization.
+
+## Contact
+
+Alfredo Delgado Moreno - [LinkedIn](https://www.linkedin.com/in/alfredo-delgado-moreno/)
