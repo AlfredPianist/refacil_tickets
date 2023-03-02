@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { IsNull, Repository } from "typeorm";
 import { Ticket } from "../ticket/ticket.entity";
 import { Event } from "./event.entity";
 
@@ -42,7 +42,8 @@ export class EventService {
   async showAvailableSeats(event: Event): Promise<Ticket[]> {
     const availableSeats = await this.ticketRepository.find({
       select: { row: true, column: true },
-      where: { buyer: null, event },
+      where: { buyer: IsNull(), event },
+      order: { row: "ASC", column: "ASC" },
     });
     return availableSeats;
   }

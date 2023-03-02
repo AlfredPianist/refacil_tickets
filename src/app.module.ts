@@ -9,7 +9,6 @@ import { BuyerModule } from "./modules/buyer/buyer.module";
 import { Event } from "./modules/event/event.entity";
 import { EventModule } from "./modules/event/event.module";
 import { Ticket } from "./modules/ticket/ticket.entity";
-import { TicketModule } from "./modules/ticket/ticket.module";
 
 @Module({
   imports: [
@@ -22,12 +21,11 @@ import { TicketModule } from "./modules/ticket/ticket.module";
       database: "tickets",
       entities: [Admin, Buyer, Event, Ticket],
       synchronize: true,
-      logging: true
+      logging: true,
     }),
     AdminModule,
     BuyerModule,
     EventModule,
-    TicketModule,
   ],
   controllers: [AppController],
   providers: [AppService],
